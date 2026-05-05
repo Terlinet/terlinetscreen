@@ -484,8 +484,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
             // CONTADOR DE BUBBLESCOINS
             Positioned(
-              left: 20,
-              top: 20,
+              right: 20,
+              bottom: 20,
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
@@ -494,7 +494,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                   border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
                 ),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Row(
                       mainAxisSize: MainAxisSize.min,
