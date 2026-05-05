@@ -584,7 +584,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
               child: _buildToolbar(),
             ),
           
-          if (_showCamera)
+            if (_showCamera)
             Positioned(
               left: _cameraX,
               top: _cameraY,
@@ -609,9 +609,151 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                 ),
               ),
             ),
+
+          _buildSideLinks(),
         ],
       ),
     ),
+    );
+  }
+
+  Widget _buildSideLinks() {
+    final links = [
+      {
+        'url': 'https://terlinet.github.io/terlinet/',
+        'name': 'TerlineT',
+        'emoji': '👽',
+        'desc': 'Inovação Pura 100% IA'
+      },
+      {
+        'url': 'https://terlinet.github.io/bee/',
+        'name': 'Bee',
+        'emoji': '🐝',
+        'desc': 'Agente IA Inteligente'
+      },
+      {
+        'url': 'https://terlinet.github.io/vision/',
+        'name': 'Vision',
+        'emoji': '😎',
+        'desc': 'Visão Computacional IA'
+      },
+      {
+        'url': 'https://tertulianonews.github.io/bubbleschain/#/bubbles',
+        'name': 'BubblesChain',
+        'emoji': '🫧',
+        'desc': 'Blockchain e IA Nativa'
+      },
+    ];
+
+    return Positioned(
+      left: 30,
+      top: 0,
+      bottom: 0,
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              margin: const EdgeInsets.only(left: 10, bottom: 15),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.blueAccent.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+              ),
+              child: const Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'SISTEMAS 100% IA',
+                    style: TextStyle(
+                      color: Colors.blueAccent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  Text(
+                    'Tecnologias Inovadoras',
+                    style: TextStyle(color: Colors.white54, fontSize: 9),
+                  ),
+                ],
+              ),
+            ),
+            ...links.map((link) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Tooltip(
+                      padding: const EdgeInsets.all(12),
+                      message: 'Acessar ${link['name']}',
+                      child: InkWell(
+                        onTap: () => html.window.open(link['url'] as String, '_blank'),
+                        borderRadius: BorderRadius.circular(40),
+                        child: Container(
+                          width: 60,
+                          height: 60,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            gradient: RadialGradient(
+                              center: const Alignment(-0.3, -0.3),
+                              radius: 0.8,
+                              colors: [
+                                Colors.white.withOpacity(0.3),
+                                Colors.blueAccent.withOpacity(0.1),
+                                Colors.blueAccent.withOpacity(0.4),
+                              ],
+                              stops: const [0.0, 0.5, 1.0],
+                            ),
+                            border: Border.all(color: Colors.white30, width: 1.5),
+                            boxShadow: [
+                              const BoxShadow(
+                                color: Colors.black45,
+                                blurRadius: 10,
+                                offset: Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            link['emoji'] as String,
+                            style: const TextStyle(fontSize: 28),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 15),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          link['name'] as String,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        Text(
+                          link['desc'] as String,
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 11,
+                            fontStyle: FontStyle.italic,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
+        ),
+      ),
     );
   }
 
