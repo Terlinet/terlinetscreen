@@ -63169,9 +63169,10 @@ if(q!=null){p=q.a
 q=q.b
 s.push(A.E8(k,A.fM(k,k,B.x,k,k,new A.d5(A.aQ(B.c.am(127.5),B.dp.D()>>>16&255,B.dp.D()>>>8&255,B.dp.D()&255),k,k,k,A.d([new A.fK(0,B.dX,B.cf,B.j,10)],t.sq),k,B.c_),k,20,k,k,k,k,20),k,k,p-10,k,q-10,k))}if(l.r&&l.Q)s.push(A.acj(k,k,new A.CX(l.z,l.as,l.y),B.iJ))
 q=A.d([],r)
-if(!l.r){p=A.aQ(51,B.i6.D()>>>16&255,B.i6.D()>>>8&255,B.i6.D()&255)
-o=A.nE(30)
-B.b.K(q,A.d([B.Bh,B.fd,B.Bk,B.O8,B.vq,A.fM(k,B.Hi,B.x,k,k,new A.d5(p,k,A.Pm(A.aQ(B.c.am(127.5),B.aP.D()>>>16&255,B.aP.D()>>>8&255,B.aP.D()&255),1),o,k,k,B.aI),k,k,k,B.Aw,k,k,k),B.vr,B.O5,B.fd,new A.dK(B.Az,A.a2_("Ative sua C\xc2MERA (\xedcone de rosto) para come\xe7ar.\nNossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\nMantenha sua m\xe3o entre 30cm e 1m de dist\xe2ncia para melhor detec\xe7\xe3o.",A.mR(k,k,A.aQ(B.c.am(178.5),B.i.D()>>>16&255,B.i.D()>>>8&255,B.i.D()&255),k,k,k,k,k,k,k,k,13,k,k,k,k,1.5,!0,k,k,k,k,k,k,k,k),B.cv),k),B.vq,B.Ob,B.J_,A.kf(A.d([B.O6,B.vn,new A.oS(B.D8,A.bN([l.ch],t.N),new A.a7W(l),k,t.eP)],r),B.ac,B.dm,B.b7,0)],r))}if(l.r){p=l.x
+if(!l.r){p=A.a2_("Ative sua C\xc2MERA (\xedcone de rosto) para come\xe7ar.\nNossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\nMantenha sua m\xe3o entre 30cm e 1m de dist\xe2ncia para melhor detec\xe7\xe3o.",A.mR(k,k,A.aQ(B.c.am(178.5),B.i.D()>>>16&255,B.i.D()>>>8&255,B.i.D()&255),k,k,k,k,k,k,k,k,13,k,k,k,k,1.5,!0,k,k,k,k,k,k,k,k),B.cv)
+o=A.aQ(51,B.i6.D()>>>16&255,B.i6.D()>>>8&255,B.i6.D()&255)
+n=A.nE(30)
+B.b.K(q,A.d([B.O5,B.fd,new A.dK(B.Az,p,k),B.vr,B.Bh,B.fd,B.Bk,B.O8,B.vq,A.fM(k,B.Hi,B.x,k,k,new A.d5(o,k,A.Pm(A.aQ(B.c.am(127.5),B.aP.D()>>>16&255,B.aP.D()>>>8&255,B.aP.D()&255),1),n,k,k,B.aI),k,k,k,B.Aw,k,k,k),B.vq,B.Ob,B.vr,A.kf(A.d([B.O6,B.vn,new A.oS(B.D8,A.bN([l.ch],t.N),new A.a7W(l),k,t.eP)],r),B.ac,B.dm,B.b7,0)],r))}if(l.r){p=l.x
 q.push(A.Be(A.d([B.Hj,B.fd,A.a2_(B.d.mk(B.h.j(B.c.im(p/60)),2,"0")+":"+B.d.mk(B.h.j(B.h.bw(p,60)),2,"0"),B.Kz,k)],r),B.ar))}q.push(B.J0)
 r=l.r
 p=r?l.gYH():l.gYD()
@@ -63474,7 +63475,7 @@ YY(){this.ad(new A.a9P(this))},
 Sq(){var s=this.a.c,r=B.d.t(s,"video/mp4")||!B.d.t(s,"video/webm")?"mp4":"webm",q=A.aff(s)
 q.setAttribute("download","TerlineT_Editado_"+Date.now()+"."+r)
 q.click()},
-S(a){var s=this,r=null,q=A.CI(r,r,B.Bg,r,r,s.a.d,r,r,r),p=t.E,o=A.d([new A.wj(!0,s.gSp(),r,r,r,r,B.x,r,!1,r,!0,r,new A.Mk(B.Oa,B.Be,r,r,r),r),B.vn],p),n=A.aga(A.fM(r,B.AU,B.x,r,r,new A.d5(B.jG,r,r,A.nE(15),r,r,B.aI),r,r,B.Ax,r,r,r,r)),m=A.d([A.kf(A.d([A.CI(r,r,A.Ts(s.w?B.B4:B.B5,B.i,r,64),r,r,s.gYX(),r,r,r)],p),B.ac,B.dm,B.b7,0),B.vr,B.Oi],p),l=s.r
+S(a){var s=this,r=null,q=A.CI(r,r,B.Bg,r,r,s.a.d,r,r,r),p=t.E,o=A.d([new A.wj(!0,s.gSp(),r,r,r,r,B.x,r,!1,r,!0,r,new A.Mk(B.Oa,B.Be,r,r,r),r),B.vn],p),n=A.aga(A.fM(r,B.AU,B.x,r,r,new A.d5(B.jG,r,r,A.nE(15),r,r,B.aI),r,r,B.Ax,r,r,r,r)),m=A.d([A.kf(A.d([A.CI(r,r,A.Ts(s.w?B.B4:B.B5,B.i,r,64),r,r,s.gYX(),r,r,r)],p),B.ac,B.dm,B.b7,0),B.J_,B.Oi],p),l=s.r
 if(l>0)m.push(new A.v3(new A.d9(s.e,s.f),new A.a9R(s),0,l,B.Fl,r))
 m.push(A.kf(A.d([A.a2_("In\xedcio: "+B.c.W(s.e,1)+"s",r,r),A.a2_("Fim: "+B.c.W(s.f,1)+"s",r,r)],p),B.ac,B.pF,B.b7,0))
 m.push(B.fd)
@@ -68529,8 +68530,8 @@ B.vn=new A.e6(10,null,null,null)
 B.vp=new A.e6(1/0,1/0,null,null)
 B.fd=new A.e6(null,10,null,null)
 B.vq=new A.e6(null,15,null,null)
-B.vr=new A.e6(null,20,null,null)
-B.J_=new A.e6(null,30,null,null)
+B.J_=new A.e6(null,20,null,null)
+B.vr=new A.e6(null,30,null,null)
 B.J0=new A.e6(null,40,null,null)
 B.J1=new A.e6(null,8,null,null)
 B.J2=new A.p2(null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null,null)
