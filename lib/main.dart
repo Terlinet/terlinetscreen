@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'dart:html' as html;
 import 'dart:js_util' as js_util;
 import 'dart:ui_web' as ui;
@@ -26,6 +27,20 @@ class TerlineTScreenRecord extends StatelessWidget {
       ),
       home: const RecorderHomePage(),
     );
+  }
+}
+
+class Bubble {
+  Offset position;
+  double radius;
+  double speed;
+  Color color;
+  bool isPopped = false;
+
+  Bubble({required this.position, required this.radius, required this.speed, required this.color});
+
+  void update() {
+    position = Offset(position.dx, position.dy - speed);
   }
 }
 
@@ -67,11 +82,17 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   // Estado do Vídeo de Fundo
   late VideoPlayerController _videoController;
 
+  // Estados do Jogo de Bolhas
+  final List<Bubble> _bubbles = [];
+  Timer? _bubbleTimer;
+  Timer? _gameLoopTimer;
+  Offset? _indexFingerPos;
+  dynamic _hands;
+
   @override
   void initState() {
     super.initState();
 
-    // Inicializa o Vídeo de Fundo
     _videoController = VideoPlayerController.asset('assets/videos/voice.mp4')
       ..initialize().then((_) {
         _videoController.setLooping(true);
@@ -80,7 +101,6 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         setState(() {});
       });
 
-    // Registra a View da Câmera
     // ignore: undefined_prefixed_name
     ui.platformViewRegistry.registerViewFactory(
       'webcam-view',
@@ -94,6 +114,98 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         });
       }
     });
+
+    _startGame();
+    _initMediaPipe();
+  }
+
+  void _initMediaPipe() {
+    try {
+      final handsClass = js_util.getProperty(html.window, 'Hands');
+      if (handsClass == null) return;
+
+      _hands = js_util.callConstructor(handsClass, [
+        js_util.jsify({
+          'locateFile': (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file',
+        })
+      ]);
+
+      js_util.callMethod(_hands, 'setOptions', [
+        js_util.jsify({
+          'maxNumHands': 1,
+          'modelComplexity': 1,
+          'minDetectionConfidence': 0.5,
+          'minTrackingConfidence': 0.5
+        })
+      ]);
+
+      js_util.callMethod(_hands, 'onResults', [
+        (results) {
+          final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
+          if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
+            final landmarks = js_util.getProperty(multiHandLandmarks, 0);
+            final indexFingerTip = js_util.getProperty(landmarks, 8); // Ponto 8 é a ponta do dedo indicador
+            
+            final double x = js_util.getProperty(indexFingerTip, 'x');
+            final double y = js_util.getProperty(indexFingerTip, 'y');
+
+            setState(() {
+              // Espelhamos o X pois a câmera é espelhada e ajustamos para o tamanho da tela
+              final size = MediaQuery.of(context).size;
+              _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
+              _checkCollisions();
+            });
+          } else {
+            setState(() {
+              _indexFingerPos = null;
+            });
+          }
+        }
+      ]);
+    } catch (e) {
+      debugPrint('Erro ao inicializar MediaPipe: $e');
+    }
+  }
+
+  void _startGame() {
+    _bubbleTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
+      if (mounted) {
+        setState(() {
+          final random = math.Random();
+          final size = MediaQuery.of(context).size;
+          _bubbles.add(Bubble(
+            position: Offset(random.nextDouble() * size.width, size.height + 50),
+            radius: 20 + random.nextDouble() * 30,
+            speed: 2 + random.nextDouble() * 4,
+            color: Colors.blueAccent.withOpacity(0.6),
+          ));
+        });
+      }
+    });
+
+    _gameLoopTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      if (mounted) {
+        setState(() {
+          for (var bubble in _bubbles) {
+            bubble.update();
+          }
+          _bubbles.removeWhere((b) => b.position.dy < -100 || b.isPopped);
+        });
+      }
+    });
+  }
+
+  void _checkCollisions() {
+    if (_indexFingerPos == null) return;
+    for (var bubble in _bubbles) {
+      if (!bubble.isPopped) {
+        double dist = (bubble.position - _indexFingerPos!).distance;
+        if (dist < bubble.radius) {
+          bubble.isPopped = true;
+          // Feedback visual opcional aqui
+        }
+      }
+    }
   }
 
   Future<void> _startRecording() async {
@@ -261,6 +373,20 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           ..style.width = '100%'
           ..style.height = '100%'
           ..style.borderRadius = '50%';
+        
+        // Envia o vídeo para o MediaPipe
+        final camera = js_util.callConstructor(js_util.getProperty(html.window, 'Camera'), [
+          _cameraVideoElement,
+          js_util.jsify({
+            'onFrame': () async {
+              await js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [js_util.jsify({'image': _cameraVideoElement})]));
+            },
+            'width': 640,
+            'height': 480
+          })
+        ]);
+        js_util.callMethod(camera, 'start', []);
+
         setState(() => _showCamera = true);
       } catch (e) {
         debugPrint('Erro ao abrir câmera: $e');
@@ -324,6 +450,28 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
             
             Container(color: Colors.black.withOpacity(0.3)),
 
+            // JOGO DE BOLHAS
+            CustomPaint(
+              size: Size.infinite,
+              painter: BubblePainter(_bubbles),
+            ),
+
+            // MIRA DO DEDO
+            if (_indexFingerPos != null)
+              Positioned(
+                left: _indexFingerPos!.dx - 10,
+                top: _indexFingerPos!.dy - 10,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withOpacity(0.5),
+                    shape: BoxShape.circle,
+                    boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
+                  ),
+                ),
+              ),
+
             if (_isRecording && _showLaser)
               CustomPaint(
                 size: Size.infinite,
@@ -364,9 +512,15 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Seus vídeos e áudios nunca saem do seu computador.\nO processamento é feito no seu navegador e o arquivo vai direto para seus Downloads.',
+                      'TENTE ESTOURAR AS BOLHAS COM O DEDO INDICADOR!',
                       textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                      style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Seus vídeos e áudios nunca saem do seu computador.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 30),
                     Row(
@@ -409,21 +563,6 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                     ),
                   const SizedBox(height: 40),
                   _buildRecordButton(),
-                  if (!_isRecording) ...[
-                    const SizedBox(height: 60),
-                    const Divider(color: Colors.white12, indent: 100, endIndent: 100),
-                    const Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.lock_outline, color: Colors.white38, size: 16),
-                        SizedBox(width: 8),
-                        Text(
-                          'Segurança TerlineT: Sem upload, sem nuvem, sem rastreio.',
-                          style: TextStyle(color: Colors.white38, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ]
                 ],
               ),
             ),
@@ -543,10 +682,77 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   void dispose() {
     _timer?.cancel();
     _trailTimer?.cancel();
+    _bubbleTimer?.cancel();
+    _gameLoopTimer?.cancel();
     _videoController.dispose();
     _cameraStream?.getTracks().forEach((track) => track.stop());
     super.dispose();
   }
+}
+
+class BubblePainter extends CustomPainter {
+  final List<Bubble> bubbles;
+  BubblePainter(this.bubbles);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (var bubble in bubbles) {
+      final paint = Paint()
+        ..color = bubble.color
+        ..style = PaintingStyle.fill;
+      
+      final borderPaint = Paint()
+        ..color = Colors.white.withOpacity(0.5)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 2;
+
+      canvas.drawCircle(bubble.position, bubble.radius, paint);
+      canvas.drawCircle(bubble.position, bubble.radius, borderPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => true;
+}
+
+class LaserPointerPainter extends CustomPainter {
+  final Offset? position;
+  final List<Offset> trail;
+  final Color color;
+
+  LaserPointerPainter(this.position, this.trail, this.color);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    if (position == null) return;
+
+    if (trail.isNotEmpty) {
+      final paintTrail = Paint()
+        ..color = color.withOpacity(0.3)
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = 8.0
+        ..style = PaintingStyle.stroke;
+
+      final path = Path();
+      path.moveTo(trail.first.dx, trail.first.dy);
+      for (var point in trail) {
+        path.lineTo(point.dx, point.dy);
+      }
+      canvas.drawPath(path, paintTrail);
+    }
+
+    final paintLaser = Paint()
+      ..color = color.withOpacity(0.6)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+    
+    canvas.drawCircle(position!, 15, paintLaser);
+
+    final paintCenter = Paint()..color = color;
+    canvas.drawCircle(position!, 5, paintCenter);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
 
 class VideoEditorPage extends StatefulWidget {
@@ -697,44 +903,4 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       ),
     );
   }
-}
-
-class LaserPointerPainter extends CustomPainter {
-  final Offset? position;
-  final List<Offset> trail;
-  final Color color;
-
-  LaserPointerPainter(this.position, this.trail, this.color);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (position == null) return;
-
-    if (trail.isNotEmpty) {
-      final paintTrail = Paint()
-        ..color = color.withOpacity(0.3)
-        ..strokeCap = StrokeCap.round
-        ..strokeWidth = 8.0
-        ..style = PaintingStyle.stroke;
-
-      final path = Path();
-      path.moveTo(trail.first.dx, trail.first.dy);
-      for (var point in trail) {
-        path.lineTo(point.dx, point.dy);
-      }
-      canvas.drawPath(path, paintTrail);
-    }
-
-    final paintLaser = Paint()
-      ..color = color.withOpacity(0.6)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-    
-    canvas.drawCircle(position!, 15, paintLaser);
-
-    final paintCenter = Paint()..color = color;
-    canvas.drawCircle(position!, 5, paintCenter);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
