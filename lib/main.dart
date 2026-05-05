@@ -491,7 +491,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 40),
                       child: Text(
-                        'Ative sua CÂMERA (ícone de rosto) para começar.\n'
+                        'Após clicar no botão para gravar, ative sua CÂMERA (ícone de rosto) para começar.\n'
                         'Nossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\n'
                         'Mantenha sua mão entre 30cm e 1m de distância para melhor detecção.',
                         textAlign: TextAlign.center,
