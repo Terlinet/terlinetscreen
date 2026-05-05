@@ -707,17 +707,45 @@ class BubblePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var bubble in bubbles) {
+      // Gradiente Radial para efeito 3D (esfera)
       final paint = Paint()
-        ..color = bubble.color
-        ..style = PaintingStyle.fill;
+        ..shader = ui.Gradient.radial(
+          Offset(bubble.position.dx - bubble.radius * 0.3, 
+                 bubble.position.dy - bubble.radius * 0.3), // Ponto de luz
+          bubble.radius,
+          [
+            Colors.white.withOpacity(0.8),    // Brilho do reflexo
+            bubble.color.withOpacity(0.4),    // Cor principal translúcida
+            bubble.color.withOpacity(0.7),    // Borda mais escura
+          ],
+          [0.0, 0.5, 1.0],
+        );
+      
+      // Brilho externo (glow)
+      final shadowPaint = Paint()
+        ..color = bubble.color.withOpacity(0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+
+      // Desenha o brilho, a bolha e o contorno
+      canvas.drawCircle(bubble.position, bubble.radius + 2, shadowPaint);
+      canvas.drawCircle(bubble.position, bubble.radius, paint);
       
       final borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.5)
+        ..color = Colors.white.withOpacity(0.3)
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
-
-      canvas.drawCircle(bubble.position, bubble.radius, paint);
+        ..strokeWidth = 1.5;
+      
       canvas.drawCircle(bubble.position, bubble.radius, borderPaint);
+
+      // Pequeno reflexo extra no topo para dar mais realismo
+      final highlightPaint = Paint()
+        ..color = Colors.white.withOpacity(0.5)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(
+        Offset(bubble.position.dx - bubble.radius * 0.4, bubble.position.dy - bubble.radius * 0.4),
+        bubble.radius * 0.15, 
+        highlightPaint
+      );
     }
   }
 
