@@ -185,11 +185,23 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         (results) {
           if (!_removeBackground) return;
           final ctx = _cameraCanvas.context2D;
+          final canvasWidth = _cameraCanvas.width!;
+          final canvasHeight = _cameraCanvas.height!;
+
           ctx.save();
-          ctx.clearRect(0, 0, _cameraCanvas.width!, _cameraCanvas.height!);
-          ctx.drawImage(js_util.getProperty(results, 'segmentationMask'), 0, 0);
+          ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+          
+          // Desenha a máscara de segmentação (o que é pessoa)
+          final mask = js_util.getProperty(results, 'segmentationMask');
+          ctx.drawImage(mask, 0, 0, canvasWidth, canvasHeight);
+          
+          // O modo 'source-in' faz com que apenas o que for desenhado DEPOIS
+          // apareça onde já existe algo no canvas (ou seja, onde a máscara foi desenhada)
           ctx.globalCompositeOperation = 'source-in';
-          ctx.drawImage(js_util.getProperty(results, 'image'), 0, 0);
+          
+          final image = js_util.getProperty(results, 'image');
+          ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+
           ctx.restore();
         }
       ]);
