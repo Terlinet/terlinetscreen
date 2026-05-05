@@ -483,6 +483,22 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   if (!_isRecording) ...[
+                    const Text(
+                      'INTERATIVIDADE COM INTELIGÊNCIA ARTIFICIAL',
+                      style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    ),
+                    const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        'Ative sua CÂMERA (ícone de rosto) para começar.\n'
+                        'Nossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\n'
+                        'Mantenha sua mão entre 30cm e 1m de distância para melhor detecção.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 30),
                     const Icon(Icons.security_rounded, size: 40, color: Colors.greenAccent),
                     const SizedBox(height: 10),
                     const Icon(Icons.videocam_rounded, size: 80, color: Colors.white),
@@ -508,22 +524,6 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                             style: TextStyle(color: Colors.greenAccent, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'INTERATIVIDADE COM INTELIGÊNCIA ARTIFICIAL',
-                      style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2),
-                    ),
-                    const SizedBox(height: 10),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
-                      child: Text(
-                        'Ative sua CÂMERA (ícone de rosto) para começar.\n'
-                        'Nossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\n'
-                        'Mantenha sua mão entre 30cm e 1m de distância para melhor detecção.',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, height: 1.5),
                       ),
                     ),
                     const SizedBox(height: 15),
