@@ -75,7 +75,9 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   // Estados de Webcam
   html.MediaStream? _cameraStream;
   bool _showCamera = false;
+  bool _removeBackground = false;
   final html.VideoElement _cameraVideoElement = html.VideoElement();
+  final html.CanvasElement _cameraCanvas = html.CanvasElement(width: 640, height: 480);
   double _cameraX = 30.0;
   double _cameraY = 300.0;
 
@@ -88,6 +90,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   Timer? _gameLoopTimer;
   Offset? _indexFingerPos;
   dynamic _hands;
+  dynamic _selfieSegmentation;
   int _bubblesPopped = 0;
 
   @override
@@ -108,6 +111,12 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       (int viewId) => _cameraVideoElement,
     );
 
+    // ignore: undefined_prefixed_name
+    ui_web.platformViewRegistry.registerViewFactory(
+      'webcam-canvas-view',
+      (int viewId) => _cameraCanvas,
+    );
+
     _trailTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) {
       if (_trail.isNotEmpty) {
         setState(() {
@@ -123,8 +132,10 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   void _initMediaPipe() {
     try {
       final handsClass = js_util.getProperty(html.window, 'Hands');
-      if (handsClass == null) return;
+      final selfieClass = js_util.getProperty(html.window, 'SelfieSegmentation');
+      if (handsClass == null || selfieClass == null) return;
 
+      // Inicializa Detecção de Mãos
       _hands = js_util.callConstructor(handsClass, [
         js_util.jsify({
           'locateFile': (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file',
@@ -145,22 +156,41 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
           if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
             final landmarks = js_util.getProperty(multiHandLandmarks, 0);
-            final indexFingerTip = js_util.getProperty(landmarks, 8); // Ponto 8 é a ponta do dedo indicador
-            
+            final indexFingerTip = js_util.getProperty(landmarks, 8);
             final double x = js_util.getProperty(indexFingerTip, 'x');
             final double y = js_util.getProperty(indexFingerTip, 'y');
-
             setState(() {
-              // Espelhamos o X pois a câmera é espelhada e ajustamos para o tamanho da tela
               final size = MediaQuery.of(context).size;
               _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
               _checkCollisions();
             });
           } else {
-            setState(() {
-              _indexFingerPos = null;
-            });
+            setState(() => _indexFingerPos = null);
           }
+        }
+      ]);
+
+      // Inicializa Remoção de Fundo (Selfie Segmentation)
+      _selfieSegmentation = js_util.callConstructor(selfieClass, [
+        js_util.jsify({
+          'locateFile': (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file',
+        })
+      ]);
+
+      js_util.callMethod(_selfieSegmentation, 'setOptions', [
+        js_util.jsify({'modelSelection': 1})
+      ]);
+
+      js_util.callMethod(_selfieSegmentation, 'onResults', [
+        (results) {
+          if (!_removeBackground) return;
+          final ctx = _cameraCanvas.context2D;
+          ctx.save();
+          ctx.clearRect(0, 0, _cameraCanvas.width!, _cameraCanvas.height!);
+          ctx.drawImage(js_util.getProperty(results, 'segmentationMask'), 0, 0);
+          ctx.globalCompositeOperation = 'source-in';
+          ctx.drawImage(js_util.getProperty(results, 'image'), 0, 0);
+          ctx.restore();
         }
       ]);
     } catch (e) {
@@ -394,7 +424,11 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           _cameraVideoElement,
           js_util.jsify({
             'onFrame': () async {
-              await js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [js_util.jsify({'image': _cameraVideoElement})]));
+              final image = js_util.jsify({'image': _cameraVideoElement});
+              await js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [image]));
+              if (_removeBackground) {
+                await js_util.promiseToFuture(js_util.callMethod(_selfieSegmentation, 'send', [image]));
+              }
             },
             'width': 640,
             'height': 480
@@ -651,8 +685,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                     border: Border.all(color: Colors.white, width: 3),
                     boxShadow: const [BoxShadow(color: Colors.black45, blurRadius: 10)],
                   ),
-                  child: const ClipOval(
-                    child: HtmlElementView(viewType: 'webcam-view'),
+                  child: ClipOval(
+                    child: HtmlElementView(viewType: _removeBackground ? 'webcam-canvas-view' : 'webcam-view'),
                   ),
                 ),
               ),
@@ -833,6 +867,12 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
             onPressed: _toggleCamera,
             tooltip: 'Ativar Webcam',
           ),
+          if (_showCamera)
+            IconButton(
+              icon: Icon(Icons.blur_on, color: _removeBackground ? Colors.greenAccent : Colors.white70),
+              onPressed: () => setState(() => _removeBackground = !_removeBackground),
+              tooltip: 'Remover Fundo (IA)',
+            ),
           if (_showCamera)
             IconButton(
               icon: const Icon(Icons.picture_in_picture_alt, color: Colors.white70),
