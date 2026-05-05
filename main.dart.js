@@ -63169,7 +63169,7 @@ if(q!=null){p=q.a
 q=q.b
 s.push(A.E8(k,A.fM(k,k,B.x,k,k,new A.d5(A.aQ(B.c.am(127.5),B.dp.D()>>>16&255,B.dp.D()>>>8&255,B.dp.D()&255),k,k,k,A.d([new A.fK(0,B.dX,B.cf,B.j,10)],t.sq),k,B.c_),k,20,k,k,k,k,20),k,k,p-10,k,q-10,k))}if(l.r&&l.Q)s.push(A.acj(k,k,new A.CX(l.z,l.as,l.y),B.iJ))
 q=A.d([],r)
-if(!l.r){p=A.a2_("Ative sua C\xc2MERA (\xedcone de rosto) para come\xe7ar.\nNossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\nMantenha sua m\xe3o entre 30cm e 1m de dist\xe2ncia para melhor detec\xe7\xe3o.",A.mR(k,k,A.aQ(B.c.am(178.5),B.i.D()>>>16&255,B.i.D()>>>8&255,B.i.D()&255),k,k,k,k,k,k,k,k,13,k,k,k,k,1.5,!0,k,k,k,k,k,k,k,k),B.cv)
+if(!l.r){p=A.a2_("Ap\xf3s clicar no bot\xe3o para gravar, ative sua C\xc2MERA (\xedcone de rosto) para come\xe7ar.\nNossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\nMantenha sua m\xe3o entre 30cm e 1m de dist\xe2ncia para melhor detec\xe7\xe3o.",A.mR(k,k,A.aQ(B.c.am(178.5),B.i.D()>>>16&255,B.i.D()>>>8&255,B.i.D()&255),k,k,k,k,k,k,k,k,13,k,k,k,k,1.5,!0,k,k,k,k,k,k,k,k),B.cv)
 o=A.aQ(51,B.i6.D()>>>16&255,B.i6.D()>>>8&255,B.i6.D()&255)
 n=A.nE(30)
 B.b.K(q,A.d([B.O5,B.fd,new A.dK(B.Az,p,k),B.vr,B.Bh,B.fd,B.Bk,B.O8,B.vq,A.fM(k,B.Hi,B.x,k,k,new A.d5(o,k,A.Pm(A.aQ(B.c.am(127.5),B.aP.D()>>>16&255,B.aP.D()>>>8&255,B.aP.D()&255),1),n,k,k,B.aI),k,k,k,B.Aw,k,k,k),B.vq,B.Ob,B.vr,A.kf(A.d([B.O6,B.vn,new A.oS(B.D8,A.bN([l.ch],t.N),new A.a7W(l),k,t.eP)],r),B.ac,B.dm,B.b7,0)],r))}if(l.r){p=l.x
