@@ -512,11 +512,21 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'TENTE ESTOURAR AS BOLHAS COM O DEDO INDICADOR!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold),
+                      'INTERATIVIDADE COM INTELIGÊNCIA ARTIFICIAL',
+                      style: TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2),
                     ),
                     const SizedBox(height: 10),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Text(
+                        'Ative sua CÂMERA (ícone de rosto) para começar.\n'
+                        'Nossa IA rastreia a ponta do seu DEDO INDICADOR em tempo real.\n'
+                        'Mantenha sua mão entre 30cm e 1m de distância para melhor detecção.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13, height: 1.5),
+                      ),
+                    ),
+                    const SizedBox(height: 15),
                     const Text(
                       'Seus vídeos e áudios nunca saem do seu computador.',
                       textAlign: TextAlign.center,
