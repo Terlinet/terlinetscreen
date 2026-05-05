@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:html' as html;
 import 'dart:js_util' as js_util;
-import 'dart:ui_web' as ui;
+import 'dart:ui' as ui;
+import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
@@ -102,7 +103,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       });
 
     // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(
+    ui_web.platformViewRegistry.registerViewFactory(
       'webcam-view',
       (int viewId) => _cameraVideoElement,
     );
@@ -822,7 +823,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
       ..style.borderRadius = '12px';
 
     // ignore: undefined_prefixed_name
-    ui.platformViewRegistry.registerViewFactory(
+    ui_web.platformViewRegistry.registerViewFactory(
       'video-editor-view',
       (int viewId) => _videoElement,
     );
