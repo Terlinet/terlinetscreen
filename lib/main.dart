@@ -88,6 +88,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   Timer? _gameLoopTimer;
   Offset? _indexFingerPos;
   dynamic _hands;
+  int _bubblesPopped = 0;
 
   @override
   void initState() {
@@ -202,6 +203,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         double dist = (bubble.position - _indexFingerPos!).distance;
         if (dist < bubble.radius) {
           bubble.isPopped = true;
+          _bubblesPopped++;
           // Feedback visual opcional aqui
         }
       }
@@ -472,18 +474,51 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
             // MIRA DO DEDO
             if (_indexFingerPos != null)
               Positioned(
-                left: _indexFingerPos!.dx - 10,
-                top: _indexFingerPos!.dy - 10,
-                child: Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    color: Colors.redAccent.withOpacity(0.5),
-                    shape: BoxShape.circle,
-                    boxShadow: [BoxShadow(color: Colors.red, blurRadius: 10)],
-                  ),
+                left: _indexFingerPos!.dx - 20,
+                top: _indexFingerPos!.dy - 20,
+                child: const Text(
+                  '☝️',
+                  style: TextStyle(fontSize: 40),
                 ),
               ),
+
+            // CONTADOR DE BUBBLESCOINS
+            Positioned(
+              left: 20,
+              top: 20,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.blueAccent.withOpacity(0.5)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text('🫧', style: TextStyle(fontSize: 20)),
+                        const SizedBox(width: 8),
+                        Text(
+                          '$_bubblesPopped BUBBLESCOINS',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Text(
+                      'PRONTO PARA FUTURA INTEGRAÇÃO',
+                      style: TextStyle(color: Colors.blueAccent, fontSize: 8, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
 
             if (_isRecording && _showLaser)
               CustomPaint(
