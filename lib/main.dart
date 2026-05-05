@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:math' as math;
 import 'dart:html' as html;
 import 'dart:js_util' as js_util;
-import 'dart:ui' as ui;
 import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -710,17 +709,19 @@ class BubblePainter extends CustomPainter {
     for (var bubble in bubbles) {
       // Gradiente Radial para efeito 3D (esfera)
       final paint = Paint()
-        ..shader = ui.Gradient.radial(
-          Offset(bubble.position.dx - bubble.radius * 0.3, 
-                 bubble.position.dy - bubble.radius * 0.3), // Ponto de luz
-          bubble.radius,
-          [
+        ..shader = RadialGradient(
+          center: const Alignment(-0.3, -0.3),
+          radius: 0.5,
+          colors: [
             Colors.white.withOpacity(0.8),    // Brilho do reflexo
             bubble.color.withOpacity(0.4),    // Cor principal translúcida
             bubble.color.withOpacity(0.7),    // Borda mais escura
           ],
-          [0.0, 0.5, 1.0],
-        );
+          stops: const [0.0, 0.5, 1.0],
+        ).createShader(Rect.fromCircle(
+          center: bubble.position,
+          radius: bubble.radius,
+        ));
       
       // Brilho externo (glow)
       final shadowPaint = Paint()
