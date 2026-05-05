@@ -300,6 +300,19 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     });
   }
 
+  void _enterPiP() {
+    try {
+      js_util.callMethod(_cameraVideoElement, 'requestPictureInPicture', []);
+    } catch (e) {
+      debugPrint('Erro ao entrar em modo PiP: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Seu navegador não suporta modo flutuante para câmera.')),
+        );
+      }
+    }
+  }
+
   void _startTimer() {
     _timer?.cancel();
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -785,6 +798,12 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
             onPressed: _toggleCamera,
             tooltip: 'Ativar Webcam',
           ),
+          if (_showCamera)
+            IconButton(
+              icon: const Icon(Icons.picture_in_picture_alt, color: Colors.white70),
+              onPressed: _enterPiP,
+              tooltip: 'Modo Flutuante (Sempre no Topo)',
+            ),
         ],
       ),
     );
