@@ -193,14 +193,14 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           
           // Desenha a máscara de segmentação (o que é pessoa)
           final mask = js_util.getProperty(results, 'segmentationMask');
-          ctx.drawImage(mask, 0, 0, canvasWidth, canvasHeight);
+          js_util.callMethod(ctx, 'drawImage', [mask, 0, 0, canvasWidth, canvasHeight]);
           
           // O modo 'source-in' faz com que apenas o que for desenhado DEPOIS
           // apareça onde já existe algo no canvas (ou seja, onde a máscara foi desenhada)
           ctx.globalCompositeOperation = 'source-in';
           
           final image = js_util.getProperty(results, 'image');
-          ctx.drawImage(image, 0, 0, canvasWidth, canvasHeight);
+          js_util.callMethod(ctx, 'drawImage', [image, 0, 0, canvasWidth, canvasHeight]);
 
           ctx.restore();
         }
