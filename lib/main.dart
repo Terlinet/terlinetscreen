@@ -55,6 +55,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   // Estado de Edição/Preview
   html.Blob? _finalVideoBlob;
   String? _videoUrl;
+  String _selectedFormat = 'webm';
 
   // Estados de Webcam
   html.MediaStream? _cameraStream;
@@ -141,7 +142,17 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       _stream = combinedStream;
       _chunks.clear();
-      _mediaRecorder = html.MediaRecorder(_stream!);
+
+      String mimeType = 'video/webm;codecs=vp8,opus';
+      if (_selectedFormat == 'mp4') {
+        if (html.MediaRecorder.isTypeSupported('video/mp4;codecs=h264,aac')) {
+          mimeType = 'video/mp4;codecs=h264,aac';
+        } else if (html.MediaRecorder.isTypeSupported('video/mp4')) {
+          mimeType = 'video/mp4';
+        }
+      }
+
+      _mediaRecorder = html.MediaRecorder(_stream!, {'mimeType': mimeType});
 
       _mediaRecorder!.addEventListener('dataavailable', (event) {
         final html.Blob blob = js_util.getProperty(event, 'data');
@@ -150,7 +161,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       _mediaRecorder!.addEventListener('stop', (event) {
         setState(() {
-          _finalVideoBlob = html.Blob(_chunks, 'video/webm');
+          _finalVideoBlob = html.Blob(_chunks, _selectedFormat == 'mp4' ? 'video/mp4' : 'video/webm');
           _videoUrl = html.Url.createObjectUrlFromBlob(_finalVideoBlob!);
         });
         js_util.callMethod(audioContext, 'close', []);
@@ -356,6 +367,26 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                       'Seus vídeos e áudios nunca saem do seu computador.\nO processamento é feito no seu navegador e o arquivo vai direto para seus Downloads.',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.white70, fontSize: 14, height: 1.4),
+                    ),
+                    const SizedBox(height: 30),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Formato: ', style: TextStyle(color: Colors.white70)),
+                        const SizedBox(width: 10),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(value: 'webm', label: Text('WEBM'), icon: Icon(Icons.video_file)),
+                            ButtonSegment(value: 'mp4', label: Text('MP4'), icon: Icon(Icons.movie)),
+                          ],
+                          selected: {_selectedFormat},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _selectedFormat = newSelection.first;
+                            });
+                          },
+                        ),
+                      ],
                     ),
                   ],
                   if (_isRecording)
@@ -580,8 +611,9 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   }
 
   void _downloadVideo() {
+    final extension = widget.videoUrl.contains('video/mp4') || !widget.videoUrl.contains('video/webm') ? 'mp4' : 'webm';
     final anchor = html.AnchorElement(href: widget.videoUrl)
-      ..setAttribute("download", "TerlineT_Editado_${DateTime.now().millisecondsSinceEpoch}.webm")
+      ..setAttribute("download", "TerlineT_Editado_${DateTime.now().millisecondsSinceEpoch}.$extension")
       ..click();
   }
 
