@@ -646,113 +646,91 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     ];
 
     return Positioned(
-      left: 30,
-      top: 0,
-      bottom: 0,
-      child: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              margin: const EdgeInsets.only(left: 10, bottom: 15),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.blueAccent.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(15),
-                border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
-              ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'SISTEMAS 100% IA',
-                    style: TextStyle(
-                      color: Colors.blueAccent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
-                  ),
-                  Text(
-                    'Tecnologias Inovadoras',
-                    style: TextStyle(color: Colors.white54, fontSize: 9),
-                  ),
-                ],
+      top: 10,
+      left: 0,
+      right: 0,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.blueAccent.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.blueAccent.withOpacity(0.3)),
+            ),
+            child: const Text(
+              'SISTEMAS 100% IA - TECNOLOGIAS INOVADORAS',
+              style: TextStyle(
+                color: Colors.blueAccent,
+                fontSize: 9,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.1,
               ),
             ),
-            ...links.map((link) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Tooltip(
-                      padding: const EdgeInsets.all(12),
-                      message: 'Acessar ${link['name']}',
+          ),
+          const SizedBox(height: 10),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: links.map((link) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    child: Tooltip(
+                      message: '${link['name']}: ${link['desc']}',
                       child: InkWell(
                         onTap: () => html.window.open(link['url'] as String, '_blank'),
-                        borderRadius: BorderRadius.circular(40),
-                        child: Container(
-                          width: 60,
-                          height: 60,
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: RadialGradient(
-                              center: const Alignment(-0.3, -0.3),
-                              radius: 0.8,
-                              colors: [
-                                Colors.white.withOpacity(0.3),
-                                Colors.blueAccent.withOpacity(0.1),
-                                Colors.blueAccent.withOpacity(0.4),
-                              ],
-                              stops: const [0.0, 0.5, 1.0],
-                            ),
-                            border: Border.all(color: Colors.white30, width: 1.5),
-                            boxShadow: [
-                              const BoxShadow(
-                                color: Colors.black45,
-                                blurRadius: 10,
-                                offset: Offset(0, 5),
+                        borderRadius: BorderRadius.circular(30),
+                        child: Column(
+                          children: [
+                            Container(
+                              width: 45,
+                              height: 45,
+                              alignment: Alignment.center,
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                gradient: RadialGradient(
+                                  center: const Alignment(-0.3, -0.3),
+                                  radius: 0.8,
+                                  colors: [
+                                    Colors.white.withOpacity(0.3),
+                                    Colors.blueAccent.withOpacity(0.1),
+                                    Colors.blueAccent.withOpacity(0.4),
+                                  ],
+                                  stops: const [0.0, 0.5, 1.0],
+                                ),
+                                border: Border.all(color: Colors.white30, width: 1),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Colors.black45,
+                                    blurRadius: 5,
+                                    offset: Offset(0, 3),
+                                  ),
+                                ],
                               ),
-                            ],
-                          ),
-                          child: Text(
-                            link['emoji'] as String,
-                            style: const TextStyle(fontSize: 28),
-                          ),
+                              child: Text(
+                                link['emoji'] as String,
+                                style: const TextStyle(fontSize: 22),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              link['name'] as String,
+                              style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                    const SizedBox(width: 15),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          link['name'] as String,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
-                        ),
-                        Text(
-                          link['desc'] as String,
-                          style: TextStyle(
-                            color: Colors.white.withOpacity(0.7),
-                            fontSize: 11,
-                            fontStyle: FontStyle.italic,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ],
-        ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
