@@ -222,10 +222,6 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       debugPrint('Erro ao inicializar MediaPipe: $e');
     }
   }
-    } catch (e) {
-      debugPrint('Erro ao inicializar MediaPipe: $e');
-    }
-  }
 
   void _startGame() {
     _bubbleTimer = Timer.periodic(const Duration(milliseconds: 800), (timer) {
