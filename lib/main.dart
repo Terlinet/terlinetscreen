@@ -153,19 +153,26 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       js_util.callMethod(_hands, 'onResults', [
         (results) {
+          if (results == null) return;
           final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
           if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
             final landmarks = js_util.getProperty(multiHandLandmarks, 0);
             final indexFingerTip = js_util.getProperty(landmarks, 8);
-            final double x = js_util.getProperty(indexFingerTip, 'x');
-            final double y = js_util.getProperty(indexFingerTip, 'y');
-            setState(() {
-              final size = MediaQuery.of(context).size;
-              _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
-              _checkCollisions();
-            });
+            if (indexFingerTip != null) {
+              final double x = js_util.getProperty(indexFingerTip, 'x');
+              final double y = js_util.getProperty(indexFingerTip, 'y');
+              if (mounted) {
+                setState(() {
+                  final size = MediaQuery.of(context).size;
+                  _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
+                  _checkCollisions();
+                });
+              }
+            }
           } else {
-            setState(() => _indexFingerPos = null);
+            if (mounted && _indexFingerPos != null) {
+              setState(() => _indexFingerPos = null);
+            }
           }
         }
       ]);
@@ -436,10 +443,19 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           _cameraVideoElement,
           js_util.jsify({
             'onFrame': () async {
-              final image = js_util.jsify({'image': _cameraVideoElement});
-              await js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [image]));
-              if (_removeBackground) {
-                await js_util.promiseToFuture(js_util.callMethod(_selfieSegmentation, 'send', [image]));
+              if (_hands != null) {
+                await js_util.promiseToFuture(
+                  js_util.callMethod(_hands, 'send', [
+                    js_util.jsify({'image': _cameraVideoElement})
+                  ]),
+                );
+              }
+              if (_removeBackground && _selfieSegmentation != null) {
+                await js_util.promiseToFuture(
+                  js_util.callMethod(_selfieSegmentation, 'send', [
+                    js_util.jsify({'image': _cameraVideoElement})
+                  ]),
+                );
               }
             },
             'width': 640,
