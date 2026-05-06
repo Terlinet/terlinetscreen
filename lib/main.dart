@@ -155,12 +155,17 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         (results) {
           if (results == null) return;
           final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
+          
           if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
             final landmarks = js_util.getProperty(multiHandLandmarks, 0);
             final indexFingerTip = js_util.getProperty(landmarks, 8);
             if (indexFingerTip != null) {
               final double x = js_util.getProperty(indexFingerTip, 'x');
               final double y = js_util.getProperty(indexFingerTip, 'y');
+              
+              // LOG PARA DEBUG - Verifique no console (F12)
+              // print('Dedo detectado em: $x, $y');
+
               if (mounted) {
                 setState(() {
                   final size = MediaQuery.of(context).size;
