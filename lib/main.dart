@@ -139,7 +139,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       // Inicializa Detecção de Mãos
       _hands = js_util.callConstructor(handsClass, [
         js_util.jsify({
-          'locateFile': (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file',
+          'locateFile': allowInterop((file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file'),
         })
       ]);
 
@@ -164,9 +164,6 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
               final double x = js_util.getProperty(indexFingerTip, 'x');
               final double y = js_util.getProperty(indexFingerTip, 'y');
               
-              // LOG PARA DEBUG - Verifique no console (F12)
-              // print('Dedo detectado em: $x, $y');
-
               if (mounted) {
                 setState(() {
                   final size = MediaQuery.of(context).size;
@@ -186,7 +183,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       // Inicializa Remoção de Fundo (Selfie Segmentation)
       _selfieSegmentation = js_util.callConstructor(selfieClass, [
         js_util.jsify({
-          'locateFile': (file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file',
+          'locateFile': allowInterop((file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file'),
         })
       ]);
 
@@ -448,21 +445,18 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         final camera = js_util.callConstructor(js_util.getProperty(html.window, 'Camera'), [
           _cameraVideoElement,
           js_util.jsify({
-            'onFrame': allowInterop(() async {
+            'onFrame': allowInterop(() {
               if (_hands != null) {
-                await js_util.promiseToFuture(
-                  js_util.callMethod(_hands, 'send', [
-                    js_util.jsify({'image': _cameraVideoElement})
-                  ]),
-                );
+                js_util.callMethod(_hands, 'send', [
+                  js_util.jsify({'image': _cameraVideoElement})
+                ]);
               }
               if (_removeBackground && _selfieSegmentation != null) {
-                await js_util.promiseToFuture(
-                  js_util.callMethod(_selfieSegmentation, 'send', [
-                    js_util.jsify({'image': _cameraVideoElement})
-                  ]),
-                );
+                js_util.callMethod(_selfieSegmentation, 'send', [
+                  js_util.jsify({'image': _cameraVideoElement})
+                ]);
               }
+              return Future.value().then(allowInterop((_) {})); // Retorna uma Promise fake para o JS
             }),
             'width': 640,
             'height': 480
