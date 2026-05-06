@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'dart:html' as html;
+import 'dart:js' show allowInterop;
 import 'dart:js_util' as js_util;
 import 'dart:ui_web' as ui_web;
 import 'package:flutter/material.dart';
@@ -152,7 +153,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       ]);
 
       js_util.callMethod(_hands, 'onResults', [
-        (results) {
+        allowInterop((results) {
           if (results == null) return;
           final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
           
@@ -179,7 +180,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
               setState(() => _indexFingerPos = null);
             }
           }
-        }
+        })
       ]);
 
       // Inicializa Remoção de Fundo (Selfie Segmentation)
@@ -194,7 +195,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       ]);
 
       js_util.callMethod(_selfieSegmentation, 'onResults', [
-        (results) {
+        allowInterop((results) {
           if (!_removeBackground) return;
           final ctx = _cameraCanvas.context2D;
           final canvasWidth = _cameraCanvas.width!;
@@ -215,7 +216,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           js_util.callMethod(ctx, 'drawImage', [image, 0, 0, canvasWidth, canvasHeight]);
 
           ctx.restore();
-        }
+        })
       ]);
     } catch (e) {
       debugPrint('Erro ao inicializar MediaPipe: $e');
@@ -447,7 +448,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         final camera = js_util.callConstructor(js_util.getProperty(html.window, 'Camera'), [
           _cameraVideoElement,
           js_util.jsify({
-            'onFrame': () async {
+            'onFrame': allowInterop(() async {
               if (_hands != null) {
                 await js_util.promiseToFuture(
                   js_util.callMethod(_hands, 'send', [
@@ -462,7 +463,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                   ]),
                 );
               }
-            },
+            }),
             'width': 640,
             'height': 480
           })
