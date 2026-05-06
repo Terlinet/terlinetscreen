@@ -137,11 +137,10 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       if (handsClass == null || selfieClass == null) return;
 
       // Inicializa Detecção de Mãos
-      _hands = js_util.callConstructor(handsClass, [
-        js_util.jsify({
-          'locateFile': allowInterop((file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file'),
-        })
-      ]);
+      final handsOptions = js_util.newObject();
+      js_util.setProperty(handsOptions, 'locateFile', allowInterop((file, [base]) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file'));
+      
+      _hands = js_util.callConstructor(handsClass, [handsOptions]);
 
       js_util.callMethod(_hands, 'setOptions', [
         js_util.jsify({
@@ -154,38 +153,41 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       js_util.callMethod(_hands, 'onResults', [
         allowInterop((results) {
-          if (results == null) return;
-          final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
-          
-          if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
-            final landmarks = js_util.getProperty(multiHandLandmarks, 0);
-            final indexFingerTip = js_util.getProperty(landmarks, 8);
-            if (indexFingerTip != null) {
-              final double x = js_util.getProperty(indexFingerTip, 'x');
-              final double y = js_util.getProperty(indexFingerTip, 'y');
-              
-              if (mounted) {
-                setState(() {
-                  final size = MediaQuery.of(context).size;
-                  _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
-                  _checkCollisions();
-                });
+          try {
+            if (results == null) return;
+            final multiHandLandmarks = js_util.getProperty(results, 'multiHandLandmarks');
+            
+            if (multiHandLandmarks != null && js_util.getProperty(multiHandLandmarks, 'length') > 0) {
+              final landmarks = js_util.getProperty(multiHandLandmarks, 0);
+              final indexFingerTip = js_util.getProperty(landmarks, 8);
+              if (indexFingerTip != null) {
+                final double x = js_util.getProperty(indexFingerTip, 'x');
+                final double y = js_util.getProperty(indexFingerTip, 'y');
+                
+                if (mounted) {
+                  setState(() {
+                    final size = MediaQuery.of(context).size;
+                    _indexFingerPos = Offset((1 - x) * size.width, y * size.height);
+                    _checkCollisions();
+                  });
+                }
+              }
+            } else {
+              if (mounted && _indexFingerPos != null) {
+                setState(() => _indexFingerPos = null);
               }
             }
-          } else {
-            if (mounted && _indexFingerPos != null) {
-              setState(() => _indexFingerPos = null);
-            }
+          } catch (e) {
+            debugPrint('Erro no onResults Hands: $e');
           }
         })
       ]);
 
       // Inicializa Remoção de Fundo (Selfie Segmentation)
-      _selfieSegmentation = js_util.callConstructor(selfieClass, [
-        js_util.jsify({
-          'locateFile': allowInterop((file) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file'),
-        })
-      ]);
+      final selfieOptions = js_util.newObject();
+      js_util.setProperty(selfieOptions, 'locateFile', allowInterop((file, [base]) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file'));
+
+      _selfieSegmentation = js_util.callConstructor(selfieClass, [selfieOptions]);
 
       js_util.callMethod(_selfieSegmentation, 'setOptions', [
         js_util.jsify({'modelSelection': 1})
@@ -193,28 +195,33 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       js_util.callMethod(_selfieSegmentation, 'onResults', [
         allowInterop((results) {
-          if (!_removeBackground) return;
-          final ctx = _cameraCanvas.context2D;
-          final canvasWidth = _cameraCanvas.width!;
-          final canvasHeight = _cameraCanvas.height!;
+          try {
+            if (!_removeBackground) return;
+            final ctx = _cameraCanvas.context2D;
+            final canvasWidth = _cameraCanvas.width!;
+            final canvasHeight = _cameraCanvas.height!;
 
-          ctx.save();
-          ctx.clearRect(0, 0, canvasWidth, canvasHeight);
-          
-          // Desenha a máscara de segmentação (o que é pessoa)
-          final mask = js_util.getProperty(results, 'segmentationMask');
-          js_util.callMethod(ctx, 'drawImage', [mask, 0, 0, canvasWidth, canvasHeight]);
-          
-          // O modo 'source-in' faz com que apenas o que for desenhado DEPOIS
-          // apareça onde já existe algo no canvas (ou seja, onde a máscara foi desenhada)
-          ctx.globalCompositeOperation = 'source-in';
-          
-          final image = js_util.getProperty(results, 'image');
-          js_util.callMethod(ctx, 'drawImage', [image, 0, 0, canvasWidth, canvasHeight]);
+            ctx.save();
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            
+            final mask = js_util.getProperty(results, 'segmentationMask');
+            js_util.callMethod(ctx, 'drawImage', [mask, 0, 0, canvasWidth, canvasHeight]);
+            
+            ctx.globalCompositeOperation = 'source-in';
+            
+            final image = js_util.getProperty(results, 'image');
+            js_util.callMethod(ctx, 'drawImage', [image, 0, 0, canvasWidth, canvasHeight]);
 
-          ctx.restore();
+            ctx.restore();
+          } catch (e) {
+            debugPrint('Erro no onResults Selfie: $e');
+          }
         })
       ]);
+    } catch (e) {
+      debugPrint('Erro ao inicializar MediaPipe: $e');
+    }
+  }
     } catch (e) {
       debugPrint('Erro ao inicializar MediaPipe: $e');
     }
@@ -442,25 +449,27 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           ..style.borderRadius = '50%';
         
         // Envia o vídeo para o MediaPipe
+        final cameraOptions = js_util.newObject();
+        js_util.setProperty(cameraOptions, 'onFrame', allowInterop(() {
+          final List<Future> futures = [];
+          if (_hands != null) {
+            futures.add(js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [
+              js_util.jsify({'image': _cameraVideoElement})
+            ])));
+          }
+          if (_removeBackground && _selfieSegmentation != null) {
+            futures.add(js_util.promiseToFuture(js_util.callMethod(_selfieSegmentation, 'send', [
+              js_util.jsify({'image': _cameraVideoElement})
+            ])));
+          }
+          return js_util.futureToPromise(Future.wait(futures));
+        }));
+        js_util.setProperty(cameraOptions, 'width', 640);
+        js_util.setProperty(cameraOptions, 'height', 480);
+
         final camera = js_util.callConstructor(js_util.getProperty(html.window, 'Camera'), [
           _cameraVideoElement,
-          js_util.jsify({
-            'onFrame': allowInterop(() {
-              if (_hands != null) {
-                js_util.callMethod(_hands, 'send', [
-                  js_util.jsify({'image': _cameraVideoElement})
-                ]);
-              }
-              if (_removeBackground && _selfieSegmentation != null) {
-                js_util.callMethod(_selfieSegmentation, 'send', [
-                  js_util.jsify({'image': _cameraVideoElement})
-                ]);
-              }
-              return Future.value().then(allowInterop((_) {})); // Retorna uma Promise fake para o JS
-            }),
-            'width': 640,
-            'height': 480
-          })
+          cameraOptions
         ]);
         js_util.callMethod(camera, 'start', []);
 
