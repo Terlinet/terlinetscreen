@@ -447,18 +447,19 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         // Envia o vídeo para o MediaPipe
         final cameraOptions = js_util.newObject();
         js_util.setProperty(cameraOptions, 'onFrame', allowInterop(() {
-          final List<Future> futures = [];
           if (_hands != null) {
-            futures.add(js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [
+            js_util.callMethod(_hands, 'send', [
               js_util.jsify({'image': _cameraVideoElement})
-            ])));
+            ]);
           }
           if (_removeBackground && _selfieSegmentation != null) {
-            futures.add(js_util.promiseToFuture(js_util.callMethod(_selfieSegmentation, 'send', [
+            js_util.callMethod(_selfieSegmentation, 'send', [
               js_util.jsify({'image': _cameraVideoElement})
-            ])));
+            ]);
           }
-          return js_util.futureToPromise(Future.wait(futures));
+          // Retorna uma Promise.resolve() nativa do JS para satisfazer o camera_utils.js
+          final promiseClass = js_util.getProperty(html.window, 'Promise');
+          return js_util.callMethod(promiseClass, 'resolve', []);
         }));
         js_util.setProperty(cameraOptions, 'width', 640);
         js_util.setProperty(cameraOptions, 'height', 480);
