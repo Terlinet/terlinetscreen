@@ -145,7 +145,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       // Inicializa Detecção de Mãos
       final handsOptions = js_util.newObject();
-      js_util.setProperty(handsOptions, 'locateFile', allowInterop((file, [base]) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file'));
+      js_util.setProperty(handsOptions, 'locateFile', allowInterop((file, base) => 'https://cdn.jsdelivr.net/npm/@mediapipe/hands/$file'));
       
       _hands = js_util.callConstructor(handsClass, [handsOptions]);
 
@@ -192,7 +192,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       // Inicializa Remoção de Fundo (Selfie Segmentation)
       final selfieOptions = js_util.newObject();
-      js_util.setProperty(selfieOptions, 'locateFile', allowInterop((file, [base]) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file'));
+      js_util.setProperty(selfieOptions, 'locateFile', allowInterop((file, base) => 'https://cdn.jsdelivr.net/npm/@mediapipe/selfie_segmentation/$file'));
 
       _selfieSegmentation = js_util.callConstructor(selfieClass, [selfieOptions]);
 
