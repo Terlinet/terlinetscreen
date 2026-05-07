@@ -480,7 +480,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     _detectionTimer?.cancel();
     // Throttle: Processa a cada 66ms (~15 FPS), ideal para evitar o erro 'abort()' do Wasm
     _detectionTimer = Timer.periodic(const Duration(milliseconds: 66), (timer) {
-      if (_cameraVideoElement.readyState >= html.VideoElement.HAVE_ENOUGH_DATA) {
+      if (_cameraVideoElement.readyState >= 4) { // 4 = HAVE_ENOUGH_DATA
         if (_hands != null) {
           js_util.callMethod(_hands, 'send', [
             js_util.jsify({'image': _cameraVideoElement})
