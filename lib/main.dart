@@ -81,6 +81,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   final html.CanvasElement _cameraCanvas = html.CanvasElement(width: 640, height: 480);
   double _cameraX = 30.0;
   double _cameraY = 300.0;
+  Timer? _detectionTimer;
+  int _frameCounter = 0;
 
   // Estado do Vídeo de Fundo
   late VideoPlayerController _videoController;
@@ -127,7 +129,12 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     });
 
     _startGame();
-    _initMediaPipe();
+    // Aguarda o carregamento da janela para garantir que os scripts MediaPipe estejam prontos
+    html.window.addEventListener('load', (_) => _initMediaPipe());
+    // Se a janela já estiver carregada, inicializa agora
+    if (html.document.readyState == 'complete') {
+      _initMediaPipe();
+    }
   }
 
   void _initMediaPipe() {
@@ -416,6 +423,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     if (_showCamera) {
       _cameraStream?.getTracks().forEach((track) => track.stop());
       _cameraVideoElement.srcObject = null;
+      _detectionTimer?.cancel();
       setState(() => _showCamera = false);
     } else {
       try {
@@ -434,7 +442,15 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           return;
         }
 
-        _cameraStream = await html.window.navigator.mediaDevices!.getUserMedia({'video': true});
+        // Configuração com resolução reduzida para melhor performance
+        _cameraStream = await html.window.navigator.mediaDevices!.getUserMedia({
+          'video': {
+            'width': {'ideal': 480},
+            'height': {'ideal': 360},
+            'frameRate': {'ideal': 20} // Limita o FPS da câmera na captura
+          }
+        });
+
         _cameraVideoElement
           ..srcObject = _cameraStream
           ..autoplay = true
@@ -444,33 +460,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           ..style.height = '100%'
           ..style.borderRadius = '50%';
         
-        // Envia o vídeo para o MediaPipe
-        final cameraOptions = js_util.newObject();
-        js_util.setProperty(cameraOptions, 'onFrame', allowInterop(() {
-          if (_hands != null) {
-            js_util.callMethod(_hands, 'send', [
-              js_util.jsify({'image': _cameraVideoElement})
-            ]);
-          }
-          if (_removeBackground && _selfieSegmentation != null) {
-            js_util.callMethod(_selfieSegmentation, 'send', [
-              js_util.jsify({'image': _cameraVideoElement})
-            ]);
-          }
-          // Retorna uma Promise.resolve() nativa do JS para satisfazer o camera_utils.js
-          final promiseClass = js_util.getProperty(html.window, 'Promise');
-          return js_util.callMethod(promiseClass, 'resolve', []);
-        }));
-        js_util.setProperty(cameraOptions, 'width', 640);
-        js_util.setProperty(cameraOptions, 'height', 480);
-
-        final camera = js_util.callConstructor(js_util.getProperty(html.window, 'Camera'), [
-          _cameraVideoElement,
-          cameraOptions
-        ]);
-        js_util.callMethod(camera, 'start', []);
-
         setState(() => _showCamera = true);
+        _startOptimizedDetection();
       } catch (e) {
         debugPrint('Erro ao abrir câmera: $e');
         if (mounted) {
@@ -483,6 +474,28 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         }
       }
     }
+  }
+
+  void _startOptimizedDetection() {
+    _detectionTimer?.cancel();
+    // Throttle: Processa a cada 66ms (~15 FPS), ideal para evitar o erro 'abort()' do Wasm
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 66), (timer) {
+      if (_cameraVideoElement.readyState >= html.VideoElement.HAVE_ENOUGH_DATA) {
+        if (_hands != null) {
+          js_util.callMethod(_hands, 'send', [
+            js_util.jsify({'image': _cameraVideoElement})
+          ]);
+        }
+        if (_removeBackground && _selfieSegmentation != null) {
+          // Processa remoção de fundo apenas a cada 2 ciclos para economizar CPU
+          if (_frameCounter++ % 2 == 0) {
+            js_util.callMethod(_selfieSegmentation, 'send', [
+              js_util.jsify({'image': _cameraVideoElement})
+            ]);
+          }
+        }
+      }
+    });
   }
 
   @override
@@ -942,6 +955,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     _trailTimer?.cancel();
     _bubbleTimer?.cancel();
     _gameLoopTimer?.cancel();
+    _detectionTimer?.cancel();
     _videoController.dispose();
     _cameraStream?.getTracks().forEach((track) => track.stop());
     super.dispose();
