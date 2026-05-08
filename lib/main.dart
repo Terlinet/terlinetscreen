@@ -68,6 +68,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
   html.Blob? _finalVideoBlob;
   String? _videoUrl;
+  String _selectedFormat = 'webm';
+  String _actualExtension = 'webm';
 
   html.MediaStream? _cameraStream;
   bool _showCamera = false;
@@ -318,7 +320,15 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       _stream = combinedStream;
       _chunks.clear();
 
-      const mimeType = 'video/webm;codecs=vp8,opus';
+      String mimeType = 'video/webm;codecs=vp8,opus';
+      if (_selectedFormat == 'mp4') {
+        if (html.MediaRecorder.isTypeSupported('video/mp4;codecs=h264,aac')) {
+          mimeType = 'video/mp4;codecs=h264,aac';
+        } else if (html.MediaRecorder.isTypeSupported('video/mp4')) {
+          mimeType = 'video/mp4';
+        }
+      }
+
       _mediaRecorder = html.MediaRecorder(_stream!, {
         'mimeType': mimeType,
         'videoBitsPerSecond': 2500000,
@@ -331,7 +341,9 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       });
       _mediaRecorder!.addEventListener('stop', (event) {
         setState(() {
-          _finalVideoBlob = html.Blob(_chunks, 'video/webm');
+          final mimeUsed = _mediaRecorder?.mimeType ?? '';
+          _actualExtension = mimeUsed.contains('mp4') ? 'mp4' : 'webm';
+          _finalVideoBlob = html.Blob(_chunks, mimeUsed.isNotEmpty ? mimeUsed : 'video/webm');
           _videoUrl = html.Url.createObjectUrlFromBlob(_finalVideoBlob!);
         });
         js_util.callMethod(audioContext, 'close', []);
@@ -488,6 +500,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
     if (_finalVideoBlob != null) {
       return VideoEditorPage(
         videoUrl: _videoUrl!,
+        extension: _actualExtension,
         onClose: () => setState(() {
           _finalVideoBlob = null;
           _videoUrl = null;
@@ -628,10 +641,33 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 30),
-                    const Text(
-                      'Formato: WEBM (Facebook, Twitter) → Para WhatsApp, converta para MP4 após salvar.',
-                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text('Formato: ', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 10),
+                        SegmentedButton<String>(
+                          segments: const [
+                            ButtonSegment(value: 'webm', label: Text('WEBM'), icon: Icon(Icons.video_file)),
+                            ButtonSegment(value: 'mp4', label: Text('MP4'), icon: Icon(Icons.movie)),
+                          ],
+                          selected: {_selectedFormat},
+                          onSelectionChanged: (Set<String> newSelection) {
+                            setState(() {
+                              _selectedFormat = newSelection.first;
+                            });
+                          },
+                        ),
+                      ],
                     ),
+                    if (_selectedFormat == 'mp4')
+                      const Padding(
+                        padding: EdgeInsets.only(top: 8),
+                        child: Text(
+                          'Nota: MP4 é ideal para compatibilidade com o Instagram.',
+                          style: TextStyle(color: Colors.orangeAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                   ],
                   if (_isRecording)
                     Column(
@@ -950,9 +986,10 @@ class LaserPointerPainter extends CustomPainter {
 
 class VideoEditorPage extends StatefulWidget {
   final String videoUrl;
+  final String extension;
   final VoidCallback onClose;
 
-  const VideoEditorPage({super.key, required this.videoUrl, required this.onClose});
+  const VideoEditorPage({super.key, required this.videoUrl, required this.extension, required this.onClose});
 
   @override
   State<VideoEditorPage> createState() => _VideoEditorPageState();
@@ -1035,7 +1072,7 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
 
   void _downloadVideo() {
     final anchor = html.AnchorElement(href: widget.videoUrl)
-      ..setAttribute("download", "TerlineT_Video_${DateTime.now().millisecondsSinceEpoch}.webm")
+      ..setAttribute("download", "TerlineT_Video_${DateTime.now().millisecondsSinceEpoch}.${widget.extension}")
       ..click();
   }
 
