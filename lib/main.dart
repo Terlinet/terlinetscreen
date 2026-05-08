@@ -281,14 +281,28 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         'getDisplayMedia',
         [js_util.jsify({
           'video': {
-            'width': {'ideal': 1280},
-            'height': {'ideal': 720},
+            'width': {'min': 640, 'ideal': 1280},
+            'height': {'min': 360, 'ideal': 720},
             'frameRate': {'ideal': 30}
           },
           'audio': true
         })],
       );
       final html.MediaStream displayStream = await js_util.promiseToFuture(displayPromise);
+
+      // Validar altura real
+      final videoTrack = displayStream.getVideoTracks().first;
+      final settings = videoTrack.getSettings();
+      final height = (js_util.getProperty(settings, 'height') as num?)?.toInt() ?? 0;
+      if (height < 120) {
+        displayStream.getTracks().forEach((t) => t.stop());
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Tela muito pequena. Escolha uma janela com altura mínima de 120px.')),
+          );
+        }
+        return;
+      }
 
       html.MediaStream? audioStream;
       try {
@@ -328,17 +342,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       _stream = combinedStream;
       _chunks.clear();
 
+      // Forçando WebM para maior estabilidade e compatibilidade de metadados
       String mimeType = 'video/webm;codecs=vp8,opus';
-      if (_selectedFormat == 'mp4') {
-        if (html.MediaRecorder.isTypeSupported('video/mp4;codecs=h264,aac')) {
-          mimeType = 'video/mp4;codecs=h264,aac';
-        } else if (html.MediaRecorder.isTypeSupported('video/mp4')) {
-          mimeType = 'video/mp4';
-        } else {
-          // Se o navegador não suporta MP4, volta para WebM para evitar arquivos corrompidos
-          mimeType = 'video/webm;codecs=vp8,opus';
-        }
-      }
 
       _mediaRecorder = html.MediaRecorder(_stream!, {
         'mimeType': mimeType,
@@ -690,24 +695,9 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
                       style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                     const SizedBox(height: 30),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Text('Formato: ', style: TextStyle(color: Colors.white70)),
-                        const SizedBox(width: 10),
-                        SegmentedButton<String>(
-                          segments: const [
-                            ButtonSegment(value: 'webm', label: Text('WEBM'), icon: Icon(Icons.video_file)),
-                            ButtonSegment(value: 'mp4', label: Text('MP4'), icon: Icon(Icons.movie)),
-                          ],
-                          selected: {_selectedFormat},
-                          onSelectionChanged: (Set<String> newSelection) {
-                            setState(() {
-                              _selectedFormat = newSelection.first;
-                            });
-                          },
-                        ),
-                      ],
+                    const Text(
+                      'Formato: WEBM (Otimizado para compartilhamento)',
+                      style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ],
                   if (_isRecording)
@@ -1147,18 +1137,10 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   }
 
   void _downloadVideo() {
-    // Detecta a extensão correta baseada no conteúdo do Blob (MIME Type)
-    String extension = 'webm';
-    if (widget.videoUrl.startsWith('blob:')) {
-      // Se não conseguirmos detectar pelo URL, usamos o formato selecionado, 
-      // mas o ideal é que o navegador tenha gravado o correto.
-      if (html.MediaRecorder.isTypeSupported('video/mp4')) {
-        extension = 'mp4';
-      }
-    }
-    
+    // Como estamos forçando WebM para garantir compatibilidade de metadados, 
+    // a extensão padrão será sempre .webm
     final anchor = html.AnchorElement(href: widget.videoUrl)
-      ..setAttribute("download", "TerlineT_Video_${DateTime.now().millisecondsSinceEpoch}.$extension")
+      ..setAttribute("download", "TerlineT_Video_${DateTime.now().millisecondsSinceEpoch}.webm")
       ..click();
   }
 
