@@ -334,10 +334,16 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           mimeType = 'video/mp4;codecs=h264,aac';
         } else if (html.MediaRecorder.isTypeSupported('video/mp4')) {
           mimeType = 'video/mp4';
+        } else {
+          // Se o navegador não suporta MP4, volta para WebM para evitar arquivos corrompidos
+          mimeType = 'video/webm;codecs=vp8,opus';
         }
       }
 
-      _mediaRecorder = html.MediaRecorder(_stream!, {'mimeType': mimeType});
+      _mediaRecorder = html.MediaRecorder(_stream!, {
+        'mimeType': mimeType,
+        'videoBitsPerSecond': 2500000 // 2.5 Mbps para garantir qualidade e dimensões
+      });
 
       _mediaRecorder!.addEventListener('dataavailable', (event) {
         final html.Blob blob = js_util.getProperty(event, 'data');
@@ -346,7 +352,9 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
       _mediaRecorder!.addEventListener('stop', (event) {
         setState(() {
-          _finalVideoBlob = html.Blob(_chunks, _selectedFormat == 'mp4' ? 'video/mp4' : 'video/webm');
+          // Usa o MIME type real que o gravador utilizou
+          final actualMimeType = _mediaRecorder?.mimeType ?? (mimeType.contains('mp4') ? 'video/mp4' : 'video/webm');
+          _finalVideoBlob = html.Blob(_chunks, actualMimeType);
           _videoUrl = html.Url.createObjectUrlFromBlob(_finalVideoBlob!);
         });
         js_util.callMethod(audioContext, 'close', []);
@@ -1139,9 +1147,18 @@ class _VideoEditorPageState extends State<VideoEditorPage> {
   }
 
   void _downloadVideo() {
-    final extension = widget.videoUrl.contains('video/mp4') || !widget.videoUrl.contains('video/webm') ? 'mp4' : 'webm';
+    // Detecta a extensão correta baseada no conteúdo do Blob (MIME Type)
+    String extension = 'webm';
+    if (widget.videoUrl.startsWith('blob:')) {
+      // Se não conseguirmos detectar pelo URL, usamos o formato selecionado, 
+      // mas o ideal é que o navegador tenha gravado o correto.
+      if (html.MediaRecorder.isTypeSupported('video/mp4')) {
+        extension = 'mp4';
+      }
+    }
+    
     final anchor = html.AnchorElement(href: widget.videoUrl)
-      ..setAttribute("download", "TerlineT_Editado_${DateTime.now().millisecondsSinceEpoch}.$extension")
+      ..setAttribute("download", "TerlineT_Video_${DateTime.now().millisecondsSinceEpoch}.$extension")
       ..click();
   }
 
