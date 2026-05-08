@@ -37,11 +37,16 @@ class Bubble {
   double speed;
   Color color;
   bool isPopped = false;
+  double popProgress = 0.0;
 
   Bubble({required this.position, required this.radius, required this.speed, required this.color});
 
   void update() {
-    position = Offset(position.dx, position.dy - speed);
+    if (isPopped) {
+      popProgress += 0.1;
+    } else {
+      position = Offset(position.dx, position.dy - speed);
+    }
   }
 }
 
@@ -226,7 +231,7 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
           for (var bubble in _bubbles) {
             bubble.update();
           }
-          _bubbles.removeWhere((b) => b.position.dy < -100 || b.isPopped);
+          _bubbles.removeWhere((b) => b.position.dy < -100 || b.popProgress >= 1.0);
         });
       }
     });
@@ -240,8 +245,18 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
         if (dist < bubble.radius) {
           bubble.isPopped = true;
           _bubblesPopped++;
+          _playPopSound();
         }
       }
+    }
+  }
+
+  void _playPopSound() {
+    try {
+      final audio = html.AudioElement('assets/bubble_pop.mp3');
+      audio.play();
+    } catch (e) {
+      debugPrint('Erro ao tocar som: $e');
     }
   }
 
@@ -913,35 +928,55 @@ class BubblePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (var bubble in bubbles) {
-      final paint = Paint()
-        ..shader = RadialGradient(
-          center: const Alignment(-0.3, -0.3),
-          radius: 0.5,
-          colors: [
-            Colors.white.withOpacity(0.8),
-            bubble.color.withOpacity(0.4),
-            bubble.color.withOpacity(0.7),
-          ],
-          stops: const [0.0, 0.5, 1.0],
-        ).createShader(Rect.fromCircle(center: bubble.position, radius: bubble.radius));
-      final shadowPaint = Paint()
-        ..color = bubble.color.withOpacity(0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
-      canvas.drawCircle(bubble.position, bubble.radius + 2, shadowPaint);
-      canvas.drawCircle(bubble.position, bubble.radius, paint);
-      final borderPaint = Paint()
-        ..color = Colors.white.withOpacity(0.3)
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
-      canvas.drawCircle(bubble.position, bubble.radius, borderPaint);
-      final highlightPaint = Paint()
-        ..color = Colors.white.withOpacity(0.5)
-        ..style = PaintingStyle.fill;
-      canvas.drawCircle(
-          Offset(bubble.position.dx - bubble.radius * 0.4, bubble.position.dy - bubble.radius * 0.4),
-          bubble.radius * 0.15,
-          highlightPaint
-      );
+      if (!bubble.isPopped) {
+        final paint = Paint()
+          ..shader = RadialGradient(
+            center: const Alignment(-0.3, -0.3),
+            radius: 0.5,
+            colors: [
+              Colors.white.withOpacity(0.8),
+              bubble.color.withOpacity(0.4),
+              bubble.color.withOpacity(0.7),
+            ],
+            stops: const [0.0, 0.5, 1.0],
+          ).createShader(Rect.fromCircle(center: bubble.position, radius: bubble.radius));
+        final shadowPaint = Paint()
+          ..color = bubble.color.withOpacity(0.2)
+          ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
+        canvas.drawCircle(bubble.position, bubble.radius + 2, shadowPaint);
+        canvas.drawCircle(bubble.position, bubble.radius, paint);
+        final borderPaint = Paint()
+          ..color = Colors.white.withOpacity(0.3)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5;
+        canvas.drawCircle(bubble.position, bubble.radius, borderPaint);
+        final highlightPaint = Paint()
+          ..color = Colors.white.withOpacity(0.5)
+          ..style = PaintingStyle.fill;
+        canvas.drawCircle(
+            Offset(bubble.position.dx - bubble.radius * 0.4, bubble.position.dy - bubble.radius * 0.4),
+            bubble.radius * 0.15,
+            highlightPaint
+        );
+      } else {
+        // Efeito de estouro (partículas)
+        final particlePaint = Paint()
+          ..color = bubble.color.withOpacity(1.0 - bubble.popProgress);
+        final double explosionRadius = bubble.radius * (1.0 + bubble.popProgress);
+        
+        for (int i = 0; i < 8; i++) {
+          final double angle = (i * 45) * math.pi / 180;
+          final double px = bubble.position.dx + math.cos(angle) * explosionRadius;
+          final double py = bubble.position.dy + math.sin(angle) * explosionRadius;
+          canvas.drawCircle(Offset(px, py), 3 * (1.0 - bubble.popProgress), particlePaint);
+        }
+        
+        final ringPaint = Paint()
+          ..color = bubble.color.withOpacity(0.5 * (1.0 - bubble.popProgress))
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
+        canvas.drawCircle(bubble.position, explosionRadius, ringPaint);
+      }
     }
   }
 
