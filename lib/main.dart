@@ -83,6 +83,8 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
   double _cameraY = 300.0;
   Timer? _detectionTimer;
   int _frameCounter = 0;
+  bool _isProcessingHands = false;
+  bool _isProcessingSelfie = false;
 
   // Estado do Vídeo de Fundo
   late VideoPlayerController _videoController;
@@ -478,20 +480,31 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
 
   void _startOptimizedDetection() {
     _detectionTimer?.cancel();
-    // Throttle: Processa a cada 66ms (~15 FPS), ideal para evitar o erro 'abort()' do Wasm
-    _detectionTimer = Timer.periodic(const Duration(milliseconds: 66), (timer) {
-      if (_cameraVideoElement.readyState >= 4) { // 4 = HAVE_ENOUGH_DATA
-        if (_hands != null) {
-          js_util.callMethod(_hands, 'send', [
-            js_util.jsify({'image': _cameraVideoElement})
-          ]);
+    _detectionTimer = Timer.periodic(const Duration(milliseconds: 66), (timer) async {
+      if (_cameraVideoElement.readyState >= 4) {
+        final imageSource = js_util.jsify({'image': _cameraVideoElement});
+
+        if (_hands != null && !_isProcessingHands) {
+          _isProcessingHands = true;
+          try {
+            await js_util.promiseToFuture(js_util.callMethod(_hands, 'send', [imageSource]));
+          } catch (e) {
+            // Silencia erros de frame para evitar poluição no console
+          } finally {
+            _isProcessingHands = false;
+          }
         }
-        if (_removeBackground && _selfieSegmentation != null) {
-          // Processa remoção de fundo apenas a cada 2 ciclos para economizar CPU
+
+        if (_removeBackground && _selfieSegmentation != null && !_isProcessingSelfie) {
           if (_frameCounter++ % 2 == 0) {
-            js_util.callMethod(_selfieSegmentation, 'send', [
-              js_util.jsify({'image': _cameraVideoElement})
-            ]);
+            _isProcessingSelfie = true;
+            try {
+              await js_util.promiseToFuture(js_util.callMethod(_selfieSegmentation, 'send', [imageSource]));
+            } catch (e) {
+              // Silencia erros de frame
+            } finally {
+              _isProcessingSelfie = false;
+            }
           }
         }
       }
