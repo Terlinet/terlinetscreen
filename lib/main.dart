@@ -279,7 +279,14 @@ class _RecorderHomePageState extends State<RecorderHomePage> {
       final displayPromise = js_util.callMethod(
         html.window.navigator.mediaDevices!,
         'getDisplayMedia',
-        [js_util.jsify({'video': true, 'audio': true})],
+        [js_util.jsify({
+          'video': {
+            'width': {'ideal': 1280},
+            'height': {'ideal': 720},
+            'frameRate': {'ideal': 30}
+          },
+          'audio': true
+        })],
       );
       final html.MediaStream displayStream = await js_util.promiseToFuture(displayPromise);
 
